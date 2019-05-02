@@ -34,10 +34,9 @@ class TSanLibDispatch(product.Product):
         llvm_build_dir = join_path(self.build_dir, '../llvm-' + host_target)
         libdispatch_path = join_path(self.args.install_destdir, 'usr')
 
-        cmd = [
+        config_cmd = [
             'cmake',
             '-GNinja',
-            '-B%s' % self.build_dir,
             '-DCMAKE_PREFIX_PATH=%s' % llvm_build_dir,
             '-DCMAKE_C_COMPILER=clang',
             '-DCMAKE_CXX_COMPILER=clang++',
@@ -47,13 +46,20 @@ class TSanLibDispatch(product.Product):
             '-DCOMPILER_RT_INTERCEPT_LIBDISPATCH=ON',
             '-DCOMPILER_RT_LIBDISPATCH_INSTALL_PATH=%s' % libdispatch_path,
             rt_source_dir]
-        shell.call(cmd)
+        build_cmd = ['ninja', 'tsan']
 
-        cmd = ['cmake', '--build', self.build_dir, '--target', 'tsan']
-        shell.call(cmd)
+        # Always rebuild TSan runtime
+        shell.rmtree(self.build_dir)
+        shell.makedirs(self.build_dir)
+
+        with shell.pushd(self.build_dir):
+            shell.call(config_cmd)
+            shell.call(build_cmd)
 
     def test(self, host_target):
         """Run check-tsan target with a LIT filter for libdispatch."""
-        cmd = ['cmake', '--build', self.build_dir, '--target', 'check-tsan']
+        cmd = ['ninja', 'check-tsan']
         env = {'LIT_FILTER': 'libdispatch'}
-        shell.call(cmd, env=env)
+
+        with shell.pushd(self.build_dir):
+            shell.call(cmd, env=env)
