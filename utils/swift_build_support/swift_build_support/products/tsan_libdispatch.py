@@ -16,8 +16,8 @@ from . import product
 from .. import shell
 
 
-def join_path(p1, p2):
-    return os.path.abspath(os.path.join(p1, p2))
+def join_path(*paths):
+    return os.path.abspath(os.path.join(*paths))
 
 class TSanLibDispatch(product.Product):
     @classmethod
@@ -30,21 +30,21 @@ class TSanLibDispatch(product.Product):
 
     def build(self, host_target):
         """Build TSan runtime (compiler-rt)."""
-        rt_source_dir = join_path(self.source_dir, '../compiler-rt')
-        llvm_build_dir = join_path(self.build_dir, '../llvm-' + host_target)
-        libdispatch_path = join_path(self.args.install_destdir, 'usr')
+        rt_source_dir = join_path(self.source_dir, os.pardir, 'compiler-rt')
+        toolchain_path = join_path(self.args.install_destdir, 'usr')
 
         config_cmd = [
             'cmake',
             '-GNinja',
-            '-DCMAKE_PREFIX_PATH=%s' % llvm_build_dir,
+            '-DCMAKE_PREFIX_PATH=%s' % toolchain_path,
             '-DCMAKE_C_COMPILER=clang',
             '-DCMAKE_CXX_COMPILER=clang++',
             '-DCMAKE_BUILD_TYPE=Release',
             '-DLLVM_ENABLE_ASSERTIONS=ON',
             '-DCOMPILER_RT_INCLUDE_TESTS=ON',
+            '-DCOMPILER_RT_BUILD_XRAY=OFF',
             '-DCOMPILER_RT_INTERCEPT_LIBDISPATCH=ON',
-            '-DCOMPILER_RT_LIBDISPATCH_INSTALL_PATH=%s' % libdispatch_path,
+            '-DCOMPILER_RT_LIBDISPATCH_INSTALL_PATH=%s' % toolchain_path,
             rt_source_dir]
         build_cmd = ['ninja', 'tsan']
 

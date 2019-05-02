@@ -3475,7 +3475,11 @@ for host in "${ALL_HOSTS[@]}"; do
                 if [[ -z "${LLVM_INSTALL_COMPONENTS}" ]] ; then
                     continue
                 fi
-                INSTALL_TARGETS=install-$(echo ${LLVM_INSTALL_COMPONENTS} | sed -E 's/;/ install-/g')
+                if [[ "${LLVM_INSTALL_COMPONENTS}" == "all" ]]; then
+                    INSTALL_TARGETS=install
+                else
+                    INSTALL_TARGETS=install-$(echo ${LLVM_INSTALL_COMPONENTS} | sed -E 's/;/ install-/g')
+                fi
                 ;;
             libcxx)
                 if [[ -z "${INSTALL_LIBCXX}" ]] ; then
