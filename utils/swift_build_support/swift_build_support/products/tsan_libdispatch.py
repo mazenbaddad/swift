@@ -16,6 +16,9 @@ from . import product
 from .. import shell
 
 
+def join_path(p1, p2):
+    return os.path.abspath(os.path.join(p1, p2))
+
 class TSanLibDispatch(product.Product):
     @classmethod
     def product_source_name(cls):
@@ -27,19 +30,17 @@ class TSanLibDispatch(product.Product):
 
     def build(self, host_target):
         """Build TSan runtime (compiler-rt)."""
-        rt_source_dir = os.path.join(self.source_dir, '../compiler-rt')
-        libdispatch_path = os.path.join(self.args.install_destdir, 'usr')
-        llvm_build_dir = os.path.join(self.build_dir, '../llvm-' + host_target)
-        cc_path = os.path.join(llvm_build_dir, 'bin/clang')
-        cxx_path = os.path.join(llvm_build_dir, 'bin/clang++')
+        rt_source_dir = join_path(self.source_dir, '../compiler-rt')
+        llvm_build_dir = join_path(self.build_dir, '../llvm-' + host_target)
+        libdispatch_path = join_path(self.args.install_destdir, 'usr')
 
         cmd = [
             'cmake',
             '-GNinja',
             '-B%s' % self.build_dir,
             '-DCMAKE_PREFIX_PATH=%s' % llvm_build_dir,
-            '-DCMAKE_C_COMPILER=%s' % cc_path,
-            '-DCMAKE_CXX_COMPILER=%s' % cxx_path,
+            '-DCMAKE_C_COMPILER=clang',
+            '-DCMAKE_CXX_COMPILER=clang++',
             '-DCMAKE_BUILD_TYPE=Release',
             '-DLLVM_ENABLE_ASSERTIONS=ON',
             '-DCOMPILER_RT_INCLUDE_TESTS=ON',
